@@ -25,15 +25,33 @@ If your project is space limited, here is a [Serial CAN-BUS module](https://www.
 
 or download the zip.
 
+
 ## Usage:
-
-
 
 Simply copy the CAN_BUS_Shield folder to your Arduino library collection.  For example,
 arduino-1.6.12/libraries.  Next time you run the Arduino IDE, you'll have a new option
 in Sketch -> Include Library -> CAN_BUS_Shield.  Review the included examples in
 CAN_BUS_Shield/examples.
 
+
+## Modification by Locoduino
+A problem has been detected in a can device which is starting after being connected to a working can network (hot plug) : 
+The problem is due to the fact that unwanted messages can be received before the setup of the filters, because the begin() causes a reset which delete the filters.
+Some incoming messages can be received between the begin() and the init_Filt().
+
+The solution is in this modification :
+In mcp2515_init() -> mcp2515_reset() is commented
+In begin()        -> pSPI->begin() is commented
+A new fonction start() is added.
+
+With this modification it is recommended to call the can fonctions in the setup in this order :
+
+start()
+init_Mask()
+init_Filt()
+begin()
+
+The example "set_mask_filter_recv.ino" has been modified in accordance
 
 
 ### 1. Set the BaudRate
@@ -78,7 +96,6 @@ We provide two functions for you to utilize these mask and filter registers. The
 **ulData** represents the content of the mask of filter.
 
 
-
 ### 3. Check Receive
 The MCP2515 can operate in either a polled mode, where the software checks for a received frame, or using additional pins to signal that a frame has been received or transmit completed.  Use the following function to poll for received frames.
 
@@ -87,13 +104,11 @@ The MCP2515 can operate in either a polled mode, where the software checks for a
 The function will return 1 if a frame arrives, and 0 if nothing arrives.
 
 
-
 ### 4. Get CAN ID
 
 When some data arrives, you can use the following function to get the CAN ID of the "send" node.
 
     INT32U MCP_CAN::getCanId(void);
-
 
 
 ### 5. Send Data
@@ -117,7 +132,6 @@ unsigned char stmp[8] = {0, 1, 2, 3, 4, 5, 6, 7};
 
 CAN.sendMsgBuf(0x00, 0, 8, stmp); //send out the message 'stmp' to the bus and tell other devices this is a standard frame from 0x00.
 ```
-
 
 
 ### 6. Receive Data
